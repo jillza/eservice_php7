@@ -1,0 +1,88 @@
+version: "2"
+services:
+
+    lb:
+      image: dockercloud/haproxy:1.3
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+      ports:
+        - 80:80
+        - 1936:1936
+      links:
+        - nginx
+        - web1
+        - web2
+        - web3
+    
+    nginx:
+      image: nginx
+      volumes:
+        - ./src:/usr/share/nginx/html
+      environment:
+        - VIRTUAL_HOST_WEIGHT=2
+        - VIRTUAL_HOST=*/assets/*
+      logging:
+        driver: syslog
+        options:
+          syslog-address: "udp://127.0.0.1:514"
+          tag: nginx
+
+    web1:
+      build: ./build/web
+      volumes:
+        - ./src:/var/www/html
+      environment:
+        - VIRTUAL_HOST=*
+        - VIRTUAL_HOST_WEIGHT=1
+        - COOKIE=SRV insert indirect nocache
+      logging:
+        driver: syslog
+        options:
+          syslog-address: "udp://127.0.0.1:514"
+          tag: web1
+
+
+    web2:
+      build: ./build/web
+      volumes:
+        - ./src:/var/www/html
+      environment:
+        - VIRTUAL_HOST_WEIGHT=1
+        - VIRTUAL_HOST=*
+        - COOKIE=SRV insert indirect nocache
+      logging:
+        driver: syslog
+        options:
+          syslog-address: "udp://127.0.0.1:514"
+          tag: web2
+
+
+    web3:
+      build: ./build/web
+      volumes:
+        - ./src:/var/www/html
+      environment:
+        - VIRTUAL_HOST_WEIGHT=1
+        - VIRTUAL_HOST=*
+        - COOKIE=SRV insert indirect nocache
+      logging:
+        driver: syslog
+        options:
+          syslog-address: "udp://127.0.0.1:514"
+          tag: web3
+
+
+    syslog:
+      build: ./build/syslog
+      ports:
+        - "127.0.0.1:514:514/udp"
+      volumes:
+        - ./logs:/var/log
+
+
+    cron:
+      build: ./build/cron
+      container_name: cron
+      volumes:
+        - ./:/my/prj
+
