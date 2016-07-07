@@ -29,9 +29,18 @@ RUN echo 'instantclient,/usr/local/instantclient' | pecl install oci8
 ADD oci8.ini /etc/php/7.0/apache2/conf.d/
 ADD php.ini /etc/php/7.0/apache2/
 
+#install memcached
+ENV DEBIAN_FRONTEND noninteractive
+ENV PHP_MEMCACHED_VERSION php7
+
+RUN apt-get update && apt-get install -y libldap2-dev libmemcached-dev zlib1g-dev
+RUN apt-get install php-memcache -y \
+    && apt-get install memcached -y
+
 RUN service apache2 restart 
 
 EXPOSE 80
 
 # By default, simply start apache.
+
 CMD /usr/sbin/apache2ctl -D FOREGROUND
